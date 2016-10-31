@@ -11,4 +11,4 @@ canary: dev
 	docker push $(PREFIX):$(TAG)
 
 all: latest canary
-	docker push $(PREFIX):latest%
+	docker push $(PREFIX):latest

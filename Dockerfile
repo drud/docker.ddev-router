@@ -1,3 +1,6 @@
 FROM jwilder/nginx-proxy:0.4.0
 
-ADD proxy.conf /etc/nginx/proxy.conf
+FROM jwilder/nginx-proxy
+RUN { \
+      echo 'client_max_body_size 100m;'; \
+    } > /etc/nginx/conf.d/drud.conf
