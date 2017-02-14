@@ -5,3 +5,4 @@ RUN { \
     } > /etc/nginx/conf.d/drud.conf
 
 ADD nginx.tmpl /app/nginx.tmpl
+
