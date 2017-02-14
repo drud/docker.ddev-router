@@ -5,6 +5,5 @@ machine:
 test:
     override:
         - make container
-        - docker run -p 80:80 --name=nginx-proxy -v /var/run/docker.sock:/tmp/docker.sock:ro -d $(cat .docker_image)
+        - docker run -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro -d $(awk '{print $1}' < .docker_image)
         - curl -I localhost | grep 503  # Make sure we get a 503 from nginx by default
-        - docker stop nginx-proxy
