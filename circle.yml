@@ -5,5 +5,5 @@ machine:
 test:
     override:
         - make container
-        - docker run -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro -d $(awk '{print $1}' < .docker_image)
+        - docker run -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro -d $(sed 's/^.*drud/drud/' < .docker_image | sed 's/ .*$//')
         - curl -I localhost | grep 503  # Make sure we get a 503 from nginx by default
