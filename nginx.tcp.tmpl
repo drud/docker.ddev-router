@@ -27,15 +27,15 @@
 
     upstream {{ $hostname }} {
     {{ range $container := $containers }}
-    	{{ $addrLen := len $container.Addresses }}
+      {{ $addrLen := len $container.Addresses }}
       {{ range $knownNetwork := $CurrentContainer.Networks }}
         {{ range $containerNetwork := $container.Networks }}
           {{ if eq $knownNetwork.Name $containerNetwork.Name }}
             {{ $port := index $ports 1 }}
             {{ $address := index $container.Addresses 0 }}
             {{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
-        	{{ end }}
-			  {{ end }}
+          {{ end }}
+        {{ end }}
       {{ end }}
     {{ end }}
     }
