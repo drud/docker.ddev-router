@@ -1,5 +1,6 @@
-{{ $CurrentContainer := where $ "ID" .Docker.CurrentContainerID | first }}
+{{/* This is heavily influenced by the work of GitHub user jmparra which can be found at https://github.com/jmparra/nginx-proxy/commit/b3977a8f335dda0a3285c0e435074f4e3bf423d4 */}}
 
+{{ $CurrentContainer := where $ "ID" .Docker.CurrentContainerID | first }}
 
 {{ define "upstream" }}
    {{ if .Address }}
