@@ -1,0 +1,48 @@
+{{ $CurrentContainer := where $ "ID" .Docker.CurrentContainerID | first }}
+
+
+{{ define "upstream" }}
+   {{ if .Address }}
+     {{/* If we got the containers from swarm and this container's port is published to host, use host IP:PORT */}}
+     {{ if and .Container.Node.ID .Address.HostPort }}
+       # {{ .Container.Node.Name }}/{{ .Container.Name }}
+       server {{ .Container.Node.Address.IP }}:{{ .Address.HostPort }};
+     {{/* If there is no swarm node or the port is not published on host, use container's IP:PORT */}}
+     {{ else }}
+       # {{ .Container.Name }}
+       server {{ .Network.IP }}:{{ .Address.Port }};
+     {{ end }}
+   {{ else }}
+     # {{ .Container.Name }}
+     server {{ .Network.IP }} down;
+   {{ end }}
+ {{ end }}
+
+ stream {
+    {{ range $ports, $containers := groupByMulti $ "Env.TCP_PORT" "," }}
+    {{ $ports := split $ports ":" }}
+    {{ $hostname := index $ports 0 }}
+    {{ $host_port := index $ports 1 }}
+
+    upstream {{ $hostname }} {
+    {{ range $container := $containers }}
+    	{{ $addrLen := len $container.Addresses }}
+      {{ range $knownNetwork := $CurrentContainer.Networks }}
+        {{ range $containerNetwork := $container.Networks }}
+          {{ if eq $knownNetwork.Name $containerNetwork.Name }}
+            {{ $port := index $ports 1 }}
+            {{ $address := index $container.Addresses 0 }}
+            {{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
+        	{{ end }}
+			  {{ end }}
+      {{ end }}
+    {{ end }}
+    }
+
+    server {
+      listen {{ $host_port }};
+      proxy_pass {{ $hostname }};
+    }
+
+    {{ end }}
+ }
