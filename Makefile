@@ -39,7 +39,8 @@ include build-tools/makefile_components/base_push.mak
 include build-tools/makefile_components/base_test_python.mak
 
 test: container
-	@docker stop nginx-proxy-test || true
-	@docker rm nginx-proxy-test || true
-	docker run -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro --name nginx-proxy-test -d $(DOCKER_REPO):$(VERSION)
-	sleep 5 && curl -I localhost | grep 503  # Make sure we get a 503 from nginx by default
+	@docker stop nginx-proxy-test 2>/dev/null || true
+	@docker rm nginx-proxy-test 2>/dev/null || true
+	docker run -p 1082:80 -v /var/run/docker.sock:/tmp/docker.sock:ro --name nginx-proxy-test -d $(DOCKER_REPO):$(VERSION)
+	sleep 5 && curl -s -I localhost:1082 | grep 503  # Make sure we get a 503 from nginx by default
+	@docker stop nginx-proxy-test 
