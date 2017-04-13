@@ -78,9 +78,18 @@ server {
 
 {{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
 
+{{/* If host is defined as hostname:port, port will be used as the listen port instead of 80 */}}
+{{ $host_port := split $host ":" }}
+{{ $hostname := first $host_port }}
+{{ $ext_port := last $host_port }}
+{{/* if hostname and ext_port match, there was no ":", so fallback to port 80 */}}
+{{ $ext_port := when (eq $hostname $ext_port) "80" $ext_port}}
+{{ $host := $hostname }}
+
 {{ range $container := $containers }}
 {{ $add_port := coalesce $container.Env.VIRTUAL_PORT_ADD "" }}
-upstream {{ $host }} {
+
+upstream {{ $container.Name }} {
 	{{ $addrLen := len $container.Addresses }}
 
 	{{ range $knownNetwork := $CurrentContainer.Networks }}
@@ -97,9 +106,9 @@ upstream {{ $host }} {
 					{{ $address := where $container.Addresses "Port" $port | first }}
 					{{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
 				{{ end }}
-}
+} {{/* end of upstream started on 92 */}}
 				{{ if $add_port }}
-				upstream {{ $host }}-{{ $add_port }} {
+				upstream {{ $container.Name }}-{{ $add_port }} {
 					{{ $address := where $container.Addresses "Port" $add_port | first }}
 					{{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
 				}
@@ -137,6 +146,9 @@ upstream {{ $host }} {
 {{/* Get the VIRTUAL_PORT_ADD defined by containers w/ the same vhost, falling back to "" */}}
 {{ $add_port := or (first (groupByKeys $containers "Env.VIRTUAL_PORT_ADD")) "" }}
 
+{{/* Get the container name defined by containers w/ the same vhost */}}
+{{ $containerName := (first (groupByKeys $containers "Name")) }}
+
 {{ if $add_port }}
 server {
 	server_name {{ $host }};
@@ -152,9 +164,9 @@ server {
 	location / {
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
-		uwsgi_pass {{ trim $proto }}://{{ trim $host }}-{{ trim $add_port }};
+		uwsgi_pass {{ trim $proto }}://{{ trim $containerName }}-{{ trim $add_port }};
 		{{ else }}
-		proxy_pass {{ trim $proto }}://{{ trim $host }}-{{ trim $add_port }};
+		proxy_pass {{ trim $proto }}://{{ trim $containerName }}-{{ trim $add_port }};
 		{{ end }}
 		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 		auth_basic	"Restricted {{ $host }}";
@@ -213,9 +225,9 @@ server {
 	location / {
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
-		uwsgi_pass {{ trim $proto }}://{{ trim $host }};
+		uwsgi_pass {{ trim $proto }}://{{ trim $containerName }};
 		{{ else }}
-		proxy_pass {{ trim $proto }}://{{ trim $host }};
+		proxy_pass {{ trim $proto }}://{{ trim $containerName }};
 		{{ end }}
 		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 		auth_basic	"Restricted {{ $host }}";
@@ -235,7 +247,7 @@ server {
 
 server {
 	server_name {{ $host }};
-	listen 80 {{ $default_server }};
+	listen {{ $ext_port }} {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
 
 	{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) }}
@@ -247,9 +259,9 @@ server {
 	location / {
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
-		uwsgi_pass {{ trim $proto }}://{{ trim $host }};
+		uwsgi_pass {{ trim $proto }}://{{ trim $containerName }};
 		{{ else }}
-		proxy_pass {{ trim $proto }}://{{ trim $host }};
+		proxy_pass {{ trim $proto }}://{{ trim $containerName }};
 		{{ end }}
 		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 		auth_basic	"Restricted {{ $host }}";
