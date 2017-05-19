@@ -90,8 +90,11 @@ server {
 	{{ $ports := coalesce $container.Env.VIRTUAL_PORT "80" }}
 	{{ $ports := split $ports "," }}
 	{{ range $port := $ports }}
+	{{/* process values in hostPort:containerPort docker format, containerPort is upstream */}}
+	{{ $container_ports := split $port ":" }}
+	{{ $upstream_port := last $container_ports }}
 
-	upstream {{ $container.Name }}-{{ $port }} {
+	upstream {{ $container.Name }}-{{ $upstream_port }} {
 		{{ $addrLen := len $container.Addresses }}
 
 		{{ range $knownNetwork := $CurrentContainer.Networks }}
@@ -104,7 +107,7 @@ server {
 						{{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
 					{{/* If more than one port exposed, use the one matching VIRTUAL_PORT env var, falling back to standard web port 80 */}}
 					{{ else }}
-						{{ $address := where $container.Addresses "Port" $port | first }}
+						{{ $address := where $container.Addresses "Port" $upstream_port | first }}
 						{{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
 					{{ end }}
 	}
@@ -146,9 +149,15 @@ server {
 		{{ $ports := coalesce $container.Env.VIRTUAL_PORT "80" }}
 		{{ $ports := split $ports "," }}
 		{{ range $port := $ports }}
+		{{/* process values in hostPort:containerPort docker format */}}
+		{{ $container_ports := split $port ":" }}
+		{{/* hostPort is port to listen on */}}
+		{{ $listen_port := first $container_ports }}
+		{{/* containerPort is upstream */}}
+		{{ $upstream_port := last $container_ports }}
 		server {
 			server_name {{ $host }};
-			listen {{ $port }} {{ $default_server }};
+			listen {{ $listen_port }} {{ $default_server }};
 			access_log /var/log/nginx/access.log vhost;
 
 			{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) }}
@@ -160,9 +169,9 @@ server {
 			location / {
 				{{ if eq $proto "uwsgi" }}
 				include uwsgi_params;
-				uwsgi_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $port }};
+				uwsgi_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $upstream_port }};
 				{{ else }}
-				proxy_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $port }};
+				proxy_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $upstream_port }};
 				{{ end }}
 				{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 				auth_basic	"Restricted {{ $host }}";
