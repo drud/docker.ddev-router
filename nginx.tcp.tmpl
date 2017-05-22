@@ -20,7 +20,7 @@
  {{ end }}
 
  stream {
-    {{ range $ports, $containers := groupByMulti $ "Env.TCP_PORT" "," }}
+    {{ range $ports, $containers := groupByMulti $ "Env.TCP_EXPOSE" "," }}
     {{ $ports := split $ports ":" }}
     {{ $upstream_port := last $ports }}
     {{ $listen_port := first $ports }}
