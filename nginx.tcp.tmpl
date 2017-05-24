@@ -20,18 +20,18 @@
  {{ end }}
 
  stream {
-    {{ range $ports, $containers := groupByMulti $ "Env.TCP_PORT" "," }}
+    {{ range $ports, $containers := groupByMulti $ "Env.TCP_EXPOSE" "," }}
     {{ $ports := split $ports ":" }}
-    {{ $hostname := index $ports 0 }}
-    {{ $host_port := index $ports 1 }}
+    {{ $upstream_port := last $ports }}
+    {{ $listen_port := first $ports }}
 
-    upstream {{ $hostname }} {
+    upstream tcp-{{ $listen_port }} {
     {{ range $container := $containers }}
       {{ $addrLen := len $container.Addresses }}
       {{ range $knownNetwork := $CurrentContainer.Networks }}
         {{ range $containerNetwork := $container.Networks }}
           {{ if eq $knownNetwork.Name $containerNetwork.Name }}
-            {{ $port := index $ports 1 }}
+            {{ $port := $upstream_port }}
             {{ $address := index $container.Addresses 0 }}
             {{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
           {{ end }}
@@ -41,8 +41,8 @@
     }
 
     server {
-      listen {{ $host_port }};
-      proxy_pass {{ $hostname }};
+      listen {{ $listen_port }};
+      proxy_pass tcp-{{ $listen_port }};
     }
 
     {{ end }}
