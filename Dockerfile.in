@@ -2,9 +2,7 @@ FROM UPSTREAM_REPO
 
 RUN { \
       echo 'client_max_body_size 100m;'; \
-    } > /etc/nginx/conf.d/drud.conf \
-    && echo "include /etc/nginx/conf.d/tcp/*.conf;" >> /etc/nginx/nginx.conf
-RUN  mkdir -p /etc/nginx/conf.d/tcp/
+    } > /etc/nginx/conf.d/drud.conf
 
 ADD . /app/
 
