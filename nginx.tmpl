@@ -60,8 +60,17 @@ server {
 	server_name _; # This is just an invalid value which will never trigger on a real hostname.
 	listen 80;
 	access_log /var/log/nginx/access.log vhost;
+
 	return 503;
+
+	error_page 503 @noupstream;
+	location @noupstream {
+		rewrite ^(.*)$ /503.html break;
+		root /app;
+	}
+
 }
+
 
 {{ if (and (exists "/etc/nginx/certs/default.crt") (exists "/etc/nginx/certs/default.key")) }}
 server {
@@ -172,7 +181,7 @@ server {
 				uwsgi_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $upstream_port }};
 				{{ else }}
 				proxy_pass {{ trim $proto }}://{{ trim $container.Name }}-{{ trim $upstream_port }};
-				{{ end }}
+                {{ end }}
 				{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 				auth_basic	"Restricted {{ $host }}";
 				auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
