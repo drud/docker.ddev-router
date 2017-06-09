@@ -4,4 +4,4 @@ This project is based on the [jwilder/nginx-proxy](http;//github.com/jwilder/ngi
 
 ## Usage
 
-This container is used to allow all `drud dev` sites to exist side by side on a shared port (typically 80). It serves as a proxy to those sites, and forwards traffic to the appropriate dev site depending on the hostname used.
+This container is used to allow all `ddev` sites to exist side by side on a shared port (typically 80). It serves as a proxy to those sites, and forwards traffic to the appropriate dev site depending on the hostname used.
