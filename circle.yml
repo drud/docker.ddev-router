@@ -1,8 +1,14 @@
-machine:
-    services:
-        - docker
+version: 2
+executorType: machine
+stages:
+  build:
+    workDir: ~/docker.ddev-router
+    steps:
+      - checkout
 
-test:
-    override:
-        - make container
-        - make test
+      - run: make container
+
+      - run:
+          shell: /bin/bash
+          command: make test
+          name: make test
