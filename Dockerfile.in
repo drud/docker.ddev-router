@@ -2,10 +2,11 @@ FROM UPSTREAM_REPO
 
 RUN { \
       echo 'client_max_body_size 100m;'; \
-    } > /etc/nginx/conf.d/drud.conf
+    } > /etc/nginx/conf.d/ddev.conf
 
 RUN 	apt-get -qq update && \
-    	apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet
+      apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet curl
 
 ADD . /app/
 
+HEALTHCHECK CMD curl --fail http://localhost/healthcheck || exit 1
