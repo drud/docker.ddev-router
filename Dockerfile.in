@@ -1,11 +1,18 @@
 FROM UPSTREAM_REPO
 
+ENV DEBIAN_FRONTEND noninteractive
+
 RUN { \
       echo 'client_max_body_size 100m;'; \
-    } > /etc/nginx/conf.d/drud.conf
+    } > /etc/nginx/conf.d/ddev.conf
 
-RUN 	apt-get -qq update && \
-    	apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet
+RUN 	apt-key adv --keyserver pgp.mit.edu --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 >/dev/null 2>&1 && \
+      apt-get -qq update && \
+      apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet curl && \
+      apt-get autoremove -y && \
+      apt-get clean -y && \
+	rm -rf /var/lib/apt/lists/*
 
 ADD . /app/
 
+HEALTHCHECK --interval=5s --retries=5 CMD curl --fail http://localhost/healthcheck || exit 1
