@@ -1,4 +1,4 @@
-FROM UPSTREAM_REPO
+FROM jwilder/nginx-proxy:0.4.0
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -6,8 +6,7 @@ RUN { \
       echo 'client_max_body_size 100m;'; \
     } > /etc/nginx/conf.d/ddev.conf
 
-RUN 	apt-key adv --keyserver pgp.mit.edu --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 >/dev/null 2>&1 && \
-      apt-get -qq update && \
+RUN   apt-get -qq update && \
       apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet curl && \
       apt-get autoremove -y && \
       apt-get clean -y && \

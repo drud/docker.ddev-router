@@ -9,7 +9,7 @@
 DOCKER_REPO ?= drud/ddev-router
 
 # Upstream repo used in the Dockerfile
-UPSTREAM_REPO ?= jwilder/nginx-proxy:0.4.0
+# UPSTREAM_REPO ?=
 
 # Top-level directories to build
 #SRC_DIRS := files drudapi secrets utils
