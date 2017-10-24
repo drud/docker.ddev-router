@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+{{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
+{{/* This is gross but allows us to create a wildcard for each domain, stripping any subdomain present */}}
+{{ $host := trim $host }}
+{{ $hostParts := split $host "." }}
+{{ $tld := last $hostParts }}
+{{ $hostNoTLD := trimSuffix (printf ".%s" $tld) $host }}
+{{ $hostNoTLDParts := split $hostNoTLD "." }}
+{{ $domain := last $hostNoTLDParts }}
+
+if [ ! -f /etc/nginx/certs/{{ $domain }}.{{ $tld }}.crt ]; then
+    echo "Generating wildcard cert for {{ $domain }}.{{ $tld }}"
+    openssl req -new -x509 -days 365 -nodes \
+                -out /etc/nginx/certs/{{ $domain }}.{{ $tld }}.crt \
+                -keyout /etc/nginx/certs/{{ $domain }}.{{ $tld }}.key \
+                -subj "/C=US/ST=Colorado/L=Denver/O=DRUD/OU=ddev/CN=*.{{ $domain }}.{{ $tld }}"
+fi
+
+{{ end }}

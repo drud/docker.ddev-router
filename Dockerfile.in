@@ -1,4 +1,6 @@
-FROM jwilder/nginx-proxy:0.6.0
+# jwilder/nginx-proxy does not have a recent tagged image, so one was created
+# in our namespace by checking out jwilder/nginx-proxy master @ commit 0c03c90
+FROM drud/nginx-proxy:0c03c90
 
 ENV DEBIAN_FRONTEND noninteractive
 
