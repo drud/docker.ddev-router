@@ -8,8 +8,12 @@ RUN { \
       echo 'client_max_body_size 100m;'; \
     } > /etc/nginx/conf.d/ddev.conf
 
+RUN { \
+      echo 'cp /app/dhparam.pem.default /etc/nginx/dhparam/dhparam.pem'; \
+    } > /app/generate-dhparam.sh
+
 RUN   apt-get -qq update && \
-      apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet curl && \
+      apt-get -qq install --no-install-recommends --no-install-suggests -y vim less telnet curl procps && \
       apt-get autoremove -y && \
       apt-get clean -y && \
 	rm -rf /var/lib/apt/lists/*
