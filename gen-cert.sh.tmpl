@@ -2,20 +2,19 @@
 set -euo pipefail
 
 {{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
-{{/* This is gross but allows us to create a wildcard for each domain, stripping any subdomain present */}}
+{{/* Set the cert name to <domain.tld>, stripping any subdomain for use of wildcard cert */}}
 {{ $host := trim $host }}
 {{ $hostParts := split $host "." }}
 {{ $tld := last $hostParts }}
-{{ $hostNoTLD := trimSuffix (printf ".%s" $tld) $host }}
-{{ $hostNoTLDParts := split $hostNoTLD "." }}
-{{ $domain := last $hostNoTLDParts }}
+{{ $hostNoTLDParts := split (trimSuffix (printf ".%s" $tld) $host) "." }}
+{{ $cert := printf "%s.%s" (last $hostNoTLDParts) $tld }}
 
-if [ ! -f /etc/nginx/certs/{{ $domain }}.{{ $tld }}.crt ]; then
-    echo "Generating wildcard cert for {{ $domain }}.{{ $tld }}"
+if [ ! -f /etc/nginx/certs/{{ $cert }}.crt ]; then
+    echo "Generating wildcard cert for {{ $cert }}"
     openssl req -new -x509 -days 365 -nodes \
-                -out /etc/nginx/certs/{{ $domain }}.{{ $tld }}.crt \
-                -keyout /etc/nginx/certs/{{ $domain }}.{{ $tld }}.key \
-                -subj "/C=US/ST=Colorado/L=Denver/O=DRUD/OU=ddev/CN=*.{{ $domain }}.{{ $tld }}"
+                -out /etc/nginx/certs/{{ $cert }}.crt \
+                -keyout /etc/nginx/certs/{{ $cert }}.key \
+                -subj "/C=US/ST=Colorado/L=Denver/O=DRUD Technology, LLC/OU=ddev/CN=*.{{ $cert }}"
 fi
 
 {{ end }}
