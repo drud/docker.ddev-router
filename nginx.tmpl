@@ -39,7 +39,7 @@ map $http_upgrade $proxy_connection {
 }
 
 # Default dhparam
-ssl_dhparam /etc/nginx/dhparam/dhparam.pem;
+# ssl_dhparam /etc/nginx/dhparam/dhparam.pem;
 
 # Set appropriate X-Forwarded-Ssl header
 map $scheme $proxy_x_forwarded_ssl {
@@ -54,6 +54,8 @@ log_format vhost '$host $remote_addr - $remote_user [$time_local] '
                  '"$http_referer" "$http_user_agent"';
 
 access_log off;
+
+client_max_body_size 100m;
 
 {{ if $.Env.RESOLVERS }}
 resolver {{ $.Env.RESOLVERS }};
@@ -216,7 +218,11 @@ server {
 
             {{ if eq $network_tag "internal" }}
             # Only allow traffic from internal clients
-            include /etc/nginx/network_internal.conf;
+            allow 127.0.0.0/8;
+            allow 10.0.0.0/8;
+            allow 192.168.0.0/16;
+            allow 172.16.0.0/12;
+            deny all;
             {{ end }}
 
             {{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) }}
@@ -281,7 +287,11 @@ server {
 
             {{ if eq $network_tag "internal" }}
             # Only allow traffic from internal clients
-            include /etc/nginx/network_internal.conf;
+            allow 127.0.0.0/8;
+            allow 10.0.0.0/8;
+            allow 192.168.0.0/16;
+            allow 172.16.0.0/12;
+            deny all;
             {{ end }}
 
             ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
