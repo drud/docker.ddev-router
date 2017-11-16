@@ -82,7 +82,7 @@ proxy_set_header Proxy "";
 
 {{ $enable_ipv6 := eq (or ($.Env.ENABLE_IPV6) "") "true" }}
 {{/* Use the first cert we can find as the 'default' cert */}}
-{{ $default_cert := first (dir "/etc/nginx/certs")}}
+{{ $default_cert := coalesce (first (dir "/etc/nginx/certs")) "" }}
 {{ $default_cert := trimSuffix ".crt" $default_cert }}
 {{ $default_cert := trimSuffix ".key" $default_cert }}
 server {
@@ -110,6 +110,7 @@ server {
     }
 }
 
+{{ if exists (printf "/etc/nginx/certs/%s.crt" $default_cert) }}
 server {
 	server_name _; # This is just an invalid value which will never trigger on a real hostname.
 	listen 443 ssl http2;
@@ -138,6 +139,7 @@ server {
     ssl_certificate /etc/nginx/certs/{{ (printf "%s.crt" $default_cert) }};
     ssl_certificate_key /etc/nginx/certs/{{ (printf "%s.key" $default_cert) }};
 }
+{{ end }}
 
 {{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
 
