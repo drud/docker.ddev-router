@@ -114,7 +114,22 @@ server {
 	listen [::]:443 ssl http2;
 	{{ end }}
 	access_log /var/log/nginx/access.log vhost;
-	return 503;
+
+    error_page 503 @noupstream;
+    location @noupstream {
+        rewrite ^(.*)$ /503.html break;
+        root /app;
+    }
+
+    location / {
+        return 503;
+    }
+
+    ## provide a health check endpoint
+    location = /healthcheck {
+        access_log off;
+        return 200;
+    }
 
 	ssl_session_tickets off;
 	ssl_certificate /etc/nginx/certs/default.crt;
